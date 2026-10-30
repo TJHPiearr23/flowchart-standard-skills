@@ -14,6 +14,7 @@
 | `show_legend` | bool | standard `false` / color `true` | 底部图例行 |
 | `require_edge_labels` | bool | `false` | 置 `true` 后，任何未标注的连线都报 W25（业务流程图建议开） |
 | `mermaid_html` | bool | `true` | Mermaid 标签是否用内联 HTML（`<br/>` 换行、`min-width` 等宽）。目标渲染器关掉了 `htmlLabels` 时置 `false`，标签退回纯文本单行 |
+| `mermaid_curve` | `"linear"` \| `"stepAfter"` \| `"step"` | `"linear"` | Mermaid 连线形态：`linear` 两点直连不拐弯（默认）；`stepAfter` 单折直角；`step` 中间再折一次（不推荐） |
 | `fragment` | bool | `false` | 片段模式：画跨页的「半张流程图」，跳过入口/出口/可达性检查 |
 | `nodes` | array | 必填 | 节点列表，顺序即同层左右顺序 |
 | `edges` | array | 必填 | 连线列表，顺序决定分支的左右次序 |
@@ -78,7 +79,7 @@ python scripts/flowchart.py spec.json --html 图.html      # 可选：额外生�
 
 - **默认产物是 SVG + Mermaid**，SVG 内颜色全部内联，单独打开/插 Word/PPT 都正常显示，不依赖 CSS 变量或 JS。
 - Mermaid 与 SVG 的图形一一对应（胶囊/矩形/平行四边形/菱形），classDef 与 SVG 同色，粘到支持 mermaid 的编辑器里就是同一张图的矢量版。
-- 为了让 Mermaid 更接近标准流程图，源码头部固定带一段 `%%{init: ...}%%`：`curve: "step"`（正交折线）、`rankSpacing/nodeSpacing`（行距列距）、`edgeLabelBackground`（标签底色 = 画布色）；节点标签用 `<br/>` 按 SVG 同样规则换行，并用 `min-width` 把同类图形撑成等宽。**注意**：Mermaid 的 dagre 布局会自行决定分支左右（可能把「否」排到左边），这一项无法在源码里约束。
+- 为了让 Mermaid 更接近标准流程图，源码头部固定带一段 `%%{init: ...}%%`：`curve: "linear"`（两点直连，不做多余拐弯；`mermaid_curve` 可改成 `stepAfter` 走直角）、`rankSpacing/nodeSpacing`（行距列距）、`edgeLabelBackground`（标签底色 = 画布色）；节点标签用 `<br/>` 按 SVG 同样规则换行，并用 `min-width` 把同类图形撑成等宽。**注意**：Mermaid 的 dagre 布局会自行决定分支左右（可能把「否」排到左边），这一项无法在源码里约束。
 
 ## 7. 校验码表
 

@@ -81,7 +81,7 @@ DEFAULT_LABELS = {"默认", "其他", "其它", "else", "default", "剩余"}
 PALETTES = {
     # 标准彩色（默认）：对齐通用业务流程图 / 教材配色
     "standard": {
-        "canvas": "#FFFFFF", "ink": "#1F2933", "sub": "#4B5563", "edge": "#7A8699",
+        "canvas": "#FFFFFF", "ink": "#1F2933", "sub": "#4B5563", "edge": "#6B7787",
         "note": "#9AA3AF",
         "start_f": "#1F1F1F", "start_s": "#1F1F1F", "start_t": "#FFFFFF",
         "end_f": "#1F1F1F", "end_s": "#1F1F1F", "end_t": "#FFFFFF",
@@ -270,6 +270,8 @@ class Diagram:
         self.require_edge_labels = bool(spec.get("require_edge_labels", False))
         # Mermaid 标签是否允许内联 HTML（<br/> 换行、min-width 等宽）；渲染器不支持 htmlLabels 时关掉
         self.mermaid_html = bool(spec.get("mermaid_html", True))
+        # Mermaid 连线形态：linear = 直连（默认，不拐弯）；stepAfter / step = 正交折线
+        self.mermaid_curve = spec.get("mermaid_curve", "linear")
         self.nodes = []
         self.edges = []
         self.notes = []
@@ -514,8 +516,12 @@ class Diagram:
             ty = max(t.y + 8, min(t.y + t.h - 8, ty))
             if self._hits_node(s.x - 2, s.cy, lane, (s.id, t.id)):
                 # 左侧同排有符号挡路 → 先贴左缘进到行间空隙，再横移到车道
-                gy = s.y - 16 if ty < s.cy else s.y + s.h + 16
-                stub = s.x - 18
+                gy = self._row_gap_y(s, up=ty < s.cy)
+                if gy is None:
+                    gy = s.y - 16 if ty < s.cy else s.y + s.h + 16
+                # 同一空隙里有多条回流边时错开几像素，避免横段完全重叠
+                gy += (k - (n - 1) / 2) * 10
+                stub = s.x - 14
                 return [(s.x, s.cy), (stub, s.cy), (stub, gy), (lane, gy), (lane, ty), (t.x, ty)]
             return [(s.x, s.cy), (lane, s.cy), (lane, ty), (t.x, ty)]
         if abs(s.cx - t.cx) < 1:
@@ -540,6 +546,29 @@ class Diagram:
             if n.y - 1 < y < n.y + n.h + 1 and not (hi <= n.x or lo >= n.x + n.w):
                 return True
         return False
+
+    def _row_gap_y(self, n, up=True):
+        """取「本行与相邻行之间」空隙的中线 y。
+
+        回流边要横移时必须走行间空隙，不能用 n.y - 16 这种拍脑袋的偏移——
+        同排若有更高的符号（如菱形），16px 还在它内部，线会贴着框边擦过去。
+        """
+        rows = sorted({m.row for m in self.nodes})
+        if n.row not in rows:
+            return None
+        i = rows.index(n.row)
+        cur = [m for m in self.nodes if m.row == n.row]
+        if up:
+            if i == 0:
+                return n.y - 18
+            prev = [m for m in self.nodes if m.row == rows[i - 1]]
+            lo, hi = max(m.y + m.h for m in prev), min(m.y for m in cur)
+        else:
+            if i == len(rows) - 1:
+                return n.y + n.h + 18
+            nxt = [m for m in self.nodes if m.row == rows[i + 1]]
+            lo, hi = max(m.y + m.h for m in cur), min(m.y for m in nxt)
+        return (lo + hi) / 2 if hi > lo else (lo + 12 if up else hi - 12)
 
     def _place_notes(self):
         placed = []
@@ -681,8 +710,8 @@ class Diagram:
                     f'L{p_to[0] + b[0]*ln:.1f},{p_to[1] + b[1]*ln:.1f}" fill="none" '
                     f'stroke="{self.c["edge"]}" stroke-width="{self.cfg["edge_sw"]}" '
                     f'stroke-linejoin="miter" stroke-linecap="round"/>')
-        bx, by = p_to[0] - ux * 10, p_to[1] - uy * 10
-        px, py = -uy * 4.8, ux * 4.8
+        bx, by = p_to[0] - ux * 11, p_to[1] - uy * 11
+        px, py = -uy * 5.3, ux * 5.3
         return (f'<polygon points="{p_to[0]:.1f},{p_to[1]:.1f} '
                 f'{bx+px:.1f},{by+py:.1f} {bx-px:.1f},{by-py:.1f}" fill="{self.c["edge"]}"/>')
 
@@ -891,6 +920,15 @@ class Diagram:
         4. classDef 与 SVG 同色同线宽，边标签底色 = 画布色。
         """
         c = self.c
+        # 箭头：Mermaid 默认 8px 小三角、与线同色，缩略图里几乎看不见。
+        # 用 themeCSS 把 marker 放大 1.55 倍（transform-box 保证缩放基准在箭尖，不会被 marker 视口裁掉）。
+        theme_css = (
+            ".marker{overflow:visible}"
+            f".arrowMarkerPath{{fill:{c['edge']};stroke:{c['edge']};stroke-width:1px;"
+            "transform-box:fill-box;transform-origin:100% 50%;transform:scale(1.55)}"
+            # 回流边用长虚线，默认点线看着像「点点点」
+            ".edge-pattern-dotted{stroke-dasharray:7 5}"
+        )
         cfg = {
             "theme": "base",
             "themeVariables": {
@@ -901,8 +939,11 @@ class Diagram:
                 "primaryTextColor": c["ink"],
                 "primaryBorderColor": c["edge"],
             },
+            "themeCSS": theme_css,
             "flowchart": {
-                "curve": "step",
+                # linear：两点之间直接连线，不做多余拐弯（默认）
+                # stepAfter：只在目标端折一次直角；step 会在中间多折一次，长连线看起来扭来扭去
+                "curve": self.mermaid_curve,
                 "htmlLabels": True,
                 "useMaxWidth": False,
                 "nodeSpacing": 44,

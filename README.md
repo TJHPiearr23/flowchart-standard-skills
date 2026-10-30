@@ -6,7 +6,7 @@
 
 *上图为 `assets/examples/login-standard.json` 的渲染结果：黑色胶囊起止、绿色流程、橙色数据、蓝色判定、灰色带标签连线，四条回流走左侧独立车道。*
 
-同一份 spec 输出的 Mermaid，渲染出来是这样（框等宽、连线正交、标签折行）：
+同一份 spec 输出的 Mermaid，渲染出来是这样（框等宽、能直连就直连、标签折行）：
 
 ![Mermaid 渲染](docs/preview-mermaid.png)
 
@@ -33,7 +33,8 @@ Mermaid 默认是圆角曲线 + 文字自适应宽度，渲染出来不像流程
 
 | 处理 | 效果 |
 |---|---|
-| `curve: "step"` | 连线走正交折线，不再是斜线/贝塞尔曲线 |
+| `curve: "linear"` | 能直连就直连，不绕行、不拐弯；要严格直角可设 `"mermaid_curve": "stepAfter"` |
+| 箭头放大 1.55× | 默认 8px 的小箭头放大到 12px，缩略图里也看得清 |
 | 标签 `<br/>` 折行 | 长文字按 SVG 同样规则换行，不被拉成横条 |
 | 同类型 `min-width` | 流程框等宽、判定框等大、起止胶囊够宽 |
 | `rankSpacing` / `nodeSpacing` | 行距列距拉开，框不贴线 |
