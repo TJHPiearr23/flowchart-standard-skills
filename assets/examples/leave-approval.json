@@ -1,0 +1,111 @@
+{
+  "title": "请假审批流程图",
+  "subtitle": "图 1　请假申请与多级审批流程",
+  "style": "academic",
+  "start_shape": "stadium",
+  "nodes": [
+    {
+      "id": "s",
+      "type": "start",
+      "text": "开始"
+    },
+    {
+      "id": "p1",
+      "type": "process",
+      "text": "填写请假申请表"
+    },
+    {
+      "id": "d1",
+      "type": "decision",
+      "text": "部门经理审批通过？"
+    },
+    {
+      "id": "p2",
+      "type": "process",
+      "text": "退回修改申请"
+    },
+    {
+      "id": "d2",
+      "type": "decision",
+      "text": "请假天数 > 3 天？"
+    },
+    {
+      "id": "p3",
+      "type": "process",
+      "text": "总经理审批"
+    },
+    {
+      "id": "p4",
+      "type": "process",
+      "text": "分管副总审批"
+    },
+    {
+      "id": "p5",
+      "type": "process",
+      "text": "人事部门备案"
+    },
+    {
+      "id": "p6",
+      "type": "process",
+      "text": "申请人销假"
+    },
+    {
+      "id": "e",
+      "type": "end",
+      "text": "结束"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s",
+      "to": "p1"
+    },
+    {
+      "from": "p1",
+      "to": "d1"
+    },
+    {
+      "from": "d1",
+      "to": "d2",
+      "label": "是"
+    },
+    {
+      "from": "d1",
+      "to": "p2",
+      "label": "否"
+    },
+    {
+      "from": "p2",
+      "to": "p1",
+      "label": "重新提交",
+      "back": true,
+      "style": "dashed"
+    },
+    {
+      "from": "d2",
+      "to": "p3",
+      "label": "是"
+    },
+    {
+      "from": "d2",
+      "to": "p4",
+      "label": "否"
+    },
+    {
+      "from": "p3",
+      "to": "p5"
+    },
+    {
+      "from": "p4",
+      "to": "p5"
+    },
+    {
+      "from": "p5",
+      "to": "p6"
+    },
+    {
+      "from": "p6",
+      "to": "e"
+    }
+  ]
+}

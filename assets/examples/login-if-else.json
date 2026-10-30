@@ -1,0 +1,106 @@
+{
+  "title": "用户登录流程",
+  "subtitle": "顺序结构 + 条件（选择）结构",
+  "style": "academic",
+  "nodes": [
+    {
+      "id": "s",
+      "type": "start",
+      "text": "开始"
+    },
+    {
+      "id": "p1",
+      "type": "process",
+      "text": "打开登录页"
+    },
+    {
+      "id": "p2",
+      "type": "process",
+      "text": "输入账号密码"
+    },
+    {
+      "id": "d1",
+      "type": "decision",
+      "text": "账号密码正确？"
+    },
+    {
+      "id": "p3",
+      "type": "process",
+      "text": "生成登录令牌"
+    },
+    {
+      "id": "p4",
+      "type": "process",
+      "text": "提示错误信息"
+    },
+    {
+      "id": "d2",
+      "type": "decision",
+      "text": "剩余尝试次数 > 0？"
+    },
+    {
+      "id": "p5",
+      "type": "process",
+      "text": "锁定账号"
+    },
+    {
+      "id": "e1",
+      "type": "end",
+      "text": "结束"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s",
+      "to": "p1"
+    },
+    {
+      "from": "p1",
+      "to": "p2"
+    },
+    {
+      "from": "p2",
+      "to": "d1"
+    },
+    {
+      "from": "d1",
+      "to": "p3",
+      "label": "是"
+    },
+    {
+      "from": "d1",
+      "to": "p4",
+      "label": "否"
+    },
+    {
+      "from": "p4",
+      "to": "d2"
+    },
+    {
+      "from": "d2",
+      "to": "p2",
+      "label": "是",
+      "back": true,
+      "style": "dashed"
+    },
+    {
+      "from": "d2",
+      "to": "p5",
+      "label": "否"
+    },
+    {
+      "from": "p3",
+      "to": "e1"
+    },
+    {
+      "from": "p5",
+      "to": "e1"
+    }
+  ],
+  "notes": [
+    {
+      "text": "最多允许 3 次重试，超限后锁定账号 15 分钟。",
+      "near": "d2"
+    }
+  ]
+}

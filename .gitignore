@@ -1,0 +1,23 @@
+# 系统 / 编辑器
+.workbuddy/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# 临时产物（渲染输出不入库，样例见 assets/examples）
+_tmp/
+dist/
+*.zip
+*.html
+
+# 保留技能自带的预览图
+!docs/preview.png

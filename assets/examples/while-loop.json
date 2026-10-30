@@ -1,0 +1,74 @@
+{
+  "title": "累加求和（当型循环）",
+  "subtitle": "循环结构 While：先判断后执行，循环体结束后折返判定框",
+  "style": "academic",
+  "nodes": [
+    {
+      "id": "s",
+      "type": "start",
+      "text": "开始"
+    },
+    {
+      "id": "init",
+      "type": "process",
+      "text": "初始化 sum=0, i=1"
+    },
+    {
+      "id": "d",
+      "type": "decision",
+      "text": "i ≤ N？"
+    },
+    {
+      "id": "body",
+      "type": "predefined",
+      "text": "累加子流程"
+    },
+    {
+      "id": "out",
+      "type": "document",
+      "text": "输出累加结果"
+    },
+    {
+      "id": "e",
+      "type": "end",
+      "text": "结束"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s",
+      "to": "init"
+    },
+    {
+      "from": "init",
+      "to": "d"
+    },
+    {
+      "from": "d",
+      "to": "body",
+      "label": "是"
+    },
+    {
+      "from": "body",
+      "to": "d",
+      "label": "折返",
+      "back": true,
+      "style": "dashed"
+    },
+    {
+      "from": "d",
+      "to": "out",
+      "label": "否"
+    },
+    {
+      "from": "out",
+      "to": "e"
+    }
+  ],
+  "notes": [
+    {
+      "text": "循环必须有终止条件：i 每轮递增，i > N 时从「否」出口跳出。",
+      "near": "d"
+    }
+  ]
+}

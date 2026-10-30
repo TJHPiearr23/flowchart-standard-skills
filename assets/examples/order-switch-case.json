@@ -1,0 +1,131 @@
+{
+  "title": "订单状态处理",
+  "subtitle": "分支结构（Switch-Case）：一个判定点，多个并列走向，必须有默认路径",
+  "style": "academic",
+  "nodes": [
+    {
+      "id": "s",
+      "type": "start",
+      "text": "开始"
+    },
+    {
+      "id": "in",
+      "type": "io",
+      "text": "读取订单状态"
+    },
+    {
+      "id": "d",
+      "type": "decision",
+      "text": "订单状态是？"
+    },
+    {
+      "id": "b1",
+      "type": "process",
+      "text": "发送催付提醒"
+    },
+    {
+      "id": "b2",
+      "type": "process",
+      "text": "生成拣货单"
+    },
+    {
+      "id": "b3",
+      "type": "process",
+      "text": "更新物流轨迹"
+    },
+    {
+      "id": "b4",
+      "type": "process",
+      "text": "关闭订单"
+    },
+    {
+      "id": "b5",
+      "type": "process",
+      "text": "记录异常状态"
+    },
+    {
+      "id": "m",
+      "type": "process",
+      "text": "写入处理日志"
+    },
+    {
+      "id": "out",
+      "type": "document",
+      "text": "处理结果报表"
+    },
+    {
+      "id": "e",
+      "type": "end",
+      "text": "结束"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s",
+      "to": "in"
+    },
+    {
+      "from": "in",
+      "to": "d"
+    },
+    {
+      "from": "d",
+      "to": "b1",
+      "label": "待付款"
+    },
+    {
+      "from": "d",
+      "to": "b2",
+      "label": "待发货"
+    },
+    {
+      "from": "d",
+      "to": "b3",
+      "label": "已发货"
+    },
+    {
+      "from": "d",
+      "to": "b4",
+      "label": "已完成"
+    },
+    {
+      "from": "d",
+      "to": "b5",
+      "label": "默认"
+    },
+    {
+      "from": "b1",
+      "to": "m"
+    },
+    {
+      "from": "b2",
+      "to": "m"
+    },
+    {
+      "from": "b3",
+      "to": "m"
+    },
+    {
+      "from": "b4",
+      "to": "m"
+    },
+    {
+      "from": "b5",
+      "to": "m"
+    },
+    {
+      "from": "m",
+      "to": "out"
+    },
+    {
+      "from": "out",
+      "to": "e"
+    }
+  ],
+  "notes": [
+    {
+      "text": "分支必须覆盖全集，未命中任何条件时走「默认」，避免状态漏处理。",
+      "near": "d"
+    }
+  ]
+}

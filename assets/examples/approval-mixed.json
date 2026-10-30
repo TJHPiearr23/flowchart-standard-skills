@@ -1,0 +1,120 @@
+{
+  "title": "采购申请审批流程",
+  "subtitle": "综合结构：顺序 + 条件 + 子流程 + 异常出口",
+  "style": "academic",
+  "nodes": [
+    {
+      "id": "s",
+      "type": "start",
+      "text": "开始"
+    },
+    {
+      "id": "submit",
+      "type": "io",
+      "text": "提交采购申请"
+    },
+    {
+      "id": "d1",
+      "type": "decision",
+      "text": "材料齐全？"
+    },
+    {
+      "id": "fix",
+      "type": "process",
+      "text": "通知补正材料"
+    },
+    {
+      "id": "risk",
+      "type": "predefined",
+      "text": "风控校验子流程"
+    },
+    {
+      "id": "d2",
+      "type": "decision",
+      "text": "校验通过？"
+    },
+    {
+      "id": "reject",
+      "type": "process",
+      "text": "驳回并说明原因"
+    },
+    {
+      "id": "approve",
+      "type": "process",
+      "text": "生成审批结论"
+    },
+    {
+      "id": "doc",
+      "type": "document",
+      "text": "采购审批单"
+    },
+    {
+      "id": "e1",
+      "type": "end",
+      "text": "结束"
+    },
+    {
+      "id": "e2",
+      "type": "end",
+      "text": "流程终止"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s",
+      "to": "submit"
+    },
+    {
+      "from": "submit",
+      "to": "d1"
+    },
+    {
+      "from": "d1",
+      "to": "fix",
+      "label": "否"
+    },
+    {
+      "from": "fix",
+      "to": "submit",
+      "label": "重新提交",
+      "back": true
+    },
+    {
+      "from": "d1",
+      "to": "risk",
+      "label": "是"
+    },
+    {
+      "from": "risk",
+      "to": "d2"
+    },
+    {
+      "from": "d2",
+      "to": "approve",
+      "label": "是"
+    },
+    {
+      "from": "d2",
+      "to": "reject",
+      "label": "否"
+    },
+    {
+      "from": "approve",
+      "to": "doc"
+    },
+    {
+      "from": "doc",
+      "to": "e1"
+    },
+    {
+      "from": "reject",
+      "to": "e2"
+    }
+  ],
+  "notes": [
+    {
+      "text": "异常路径（驳回）单独结束，不与主结束节点合并，便于统计终止原因。",
+      "near": "reject"
+    }
+  ]
+}
