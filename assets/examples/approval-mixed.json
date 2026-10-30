@@ -10,8 +10,8 @@
     },
     {
       "id": "submit",
-      "type": "io",
-      "text": "提交采购申请"
+      "type": "data",
+      "text": "采购申请单"
     },
     {
       "id": "d1",

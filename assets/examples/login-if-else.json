@@ -1,7 +1,7 @@
 {
   "title": "用户登录流程",
   "subtitle": "顺序结构 + 条件（选择）结构",
-  "style": "academic",
+  "style": "standard",
   "nodes": [
     {
       "id": "s",
@@ -30,8 +30,8 @@
     },
     {
       "id": "p4",
-      "type": "process",
-      "text": "提示错误信息"
+      "type": "data",
+      "text": "提示账号或密码错误"
     },
     {
       "id": "d2",

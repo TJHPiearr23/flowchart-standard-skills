@@ -1,5 +1,6 @@
 # 系统 / 编辑器
 .workbuddy/
+.workbuddy-ai/
 .vscode/
 .idea/
 .DS_Store
@@ -18,6 +19,8 @@ _tmp/
 dist/
 *.zip
 *.html
+assets/examples/*.mmd
+assets/examples/*.svg
 
 # 保留技能自带的预览图
 !docs/preview.png

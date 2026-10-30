@@ -1,0 +1,39 @@
+{
+  "title": "用户登录流程图",
+  "subtitle": "标准彩色 · 开始/结束 + 流程 + 数据 + 判定 + 连线",
+  "style": "standard",
+  "nodes": [
+    {"id": "s",    "type": "start",    "text": "开始"},
+    {"id": "p1",   "type": "process",  "text": "进入官网"},
+    {"id": "p2",   "type": "process",  "text": "登录页面"},
+    {"id": "d1",   "type": "decision", "text": "是否注册？"},
+    {"id": "p3",   "type": "process",  "text": "注册页面"},
+    {"id": "d2",   "type": "decision", "text": "记住密码？"},
+    {"id": "p4",   "type": "process",  "text": "找回密码"},
+    {"id": "p5",   "type": "process",  "text": "输入账号密码登录"},
+    {"id": "d3",   "type": "decision", "text": "输入正确？"},
+    {"id": "dt1",  "type": "data",     "text": "提示账号不存在"},
+    {"id": "dt2",  "type": "data",     "text": "提示密码错误请重新输入"},
+    {"id": "e",    "type": "end",      "text": "登录成功"}
+  ],
+  "edges": [
+    {"from": "s",  "to": "p1", "label": "打开浏览器"},
+    {"from": "p1", "to": "p2", "label": "点击登录"},
+    {"from": "p2", "to": "d1", "label": "提交"},
+    {"from": "d1", "to": "p3", "label": "否"},
+    {"from": "d1", "to": "d2", "label": "是"},
+    {"from": "p3", "to": "p2", "label": "注册完成", "back": true, "style": "dashed"},
+    {"from": "d2", "to": "p4", "label": "否"},
+    {"from": "d2", "to": "p5", "label": "是"},
+    {"from": "p4", "to": "p2", "label": "重新登录", "back": true, "style": "dashed"},
+    {"from": "p5", "to": "d3", "label": "校验"},
+    {"from": "d3", "to": "dt1", "label": "账号错误"},
+    {"from": "d3", "to": "dt2", "label": "密码错误"},
+    {"from": "d3", "to": "e",   "label": "是"},
+    {"from": "dt1", "to": "p2", "label": "返回", "back": true, "style": "dashed"},
+    {"from": "dt2", "to": "p2", "label": "返回", "back": true, "style": "dashed"}
+  ],
+  "notes": [
+    {"text": "账号不存在 / 密码错误时给出明确提示，并允许返回登录页重试。", "near": "d3"}
+  ]
+}
