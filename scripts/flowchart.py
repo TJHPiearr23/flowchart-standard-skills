@@ -268,6 +268,8 @@ class Diagram:
         # 开始符号形状：stadium = 黑色胶囊（标准/默认）；hexagon = ISO 准备作业
         self.start_shape = spec.get("start_shape", "hexagon" if self.style == "academic" else "stadium")
         self.require_edge_labels = bool(spec.get("require_edge_labels", False))
+        # Mermaid 标签是否允许内联 HTML（<br/> 换行、min-width 等宽）；渲染器不支持 htmlLabels 时关掉
+        self.mermaid_html = bool(spec.get("mermaid_html", True))
         self.nodes = []
         self.edges = []
         self.notes = []
@@ -853,20 +855,91 @@ class Diagram:
             s = "n_" + s
         return s
 
+    def _mermaid_edge_order(self):
+        """保持 spec 中的连线顺序。
+
+        Mermaid 的 dagre 用全局最少交叉做排序，声明顺序只是弱提示；实测强行重排
+        「是」优先会把主干顶偏、主流程线出现折角，反而更不像标准图，因此不做干预。
+        """
+        return list(self.edges)
+
+    def _mermaid_label(self, n, uniform):
+        """节点标签：按 SVG 的换行结果输出 <br/>；同类型图形用 min-width 对齐宽度。
+
+        标准图要求「同类图形等大」，而 Mermaid 默认按文字自适应宽度，同一列会出现
+        4 字框和 9 字框混排。这里用 inline-block + min-width 把同类标签撑到统一宽度，
+        文字仍然居中，视觉上就与 SVG 的等宽矩形一致。
+        """
+        lines = [x for x in (n.lines or [n.text]) if x != ""] or [n.text or ""]
+        if not self.mermaid_html:
+            # 纯文本模式：不能出现 <br/>，长句用空格分隔
+            return " ".join(lines).replace('"', "#quot;")
+        txt = "<br/>".join(lines).replace('"', "#quot;")
+        em = uniform.get(n.type)
+        if not em:
+            return txt
+        return (f"<span style='display:inline-block;min-width:{em}em;text-align:center'>"
+                f"{txt}</span>")
+
     def to_mermaid(self):
-        """输出可二次编辑的 Mermaid 源码；图形与 SVG 严格一一对应。"""
-        L = ["flowchart TD"]
+        """输出可二次编辑的 Mermaid 源码。
+
+        为了让 Mermaid 渲染结果尽量贴近标准流程图，源码里固定写入四件事：
+        1. init 指令：curve=step（正交折线，不用默认的贝塞尔曲线）、加大 rank/node 间距；
+        2. 节点文字按 SVG 同样的规则换行（<br/>），避免长文本把框拉成横条；
+        3. 同类图形用 min-width 撑成等宽（可用 "mermaid_html": false 关闭）；
+        4. classDef 与 SVG 同色同线宽，边标签底色 = 画布色。
+        """
+        c = self.c
+        cfg = {
+            "theme": "base",
+            "themeVariables": {
+                "fontFamily": "Microsoft YaHei, PingFang SC, Noto Sans SC, sans-serif",
+                "fontSize": "14px",
+                "lineColor": c["edge"],
+                "edgeLabelBackground": c["canvas"],
+                "primaryTextColor": c["ink"],
+                "primaryBorderColor": c["edge"],
+            },
+            "flowchart": {
+                "curve": "step",
+                "htmlLabels": True,
+                "useMaxWidth": False,
+                "nodeSpacing": 44,
+                "rankSpacing": 58,
+                "padding": 12,
+            },
+        }
+        # 同类图形的统一宽度（em）：取该类型中最宽的一行文字 + 内边距
+        # 菱形要在左右顶点收窄处留白，胶囊要够宽才像「开始/结束」，因此各类型留白不同
+        pad = {"decision": 2.6, "start": 3.2, "end": 3.2, "document": 1.0}
+        uniform = {}
+        for t in ("process", "data", "io", "predefined", "document", "decision"):
+            ws = [max(text_w(l, 14) for l in (n.lines or [n.text]))
+                  for n in self.nodes if n.type == t]
+            if ws:
+                uniform[t] = round(max(ws) / 14 + pad.get(t, 0.8), 1)
+        # 开始/结束同类同尺寸：取两者中较宽的一条，两个胶囊等宽
+        se = [max(text_w(l, 14) for l in (n.lines or [n.text]))
+              for n in self.nodes if n.type in ("start", "end")]
+        if se:
+            uniform["start"] = uniform["end"] = round(max(se) / 14 + 3.2, 1)
+
+        L = ["%%{init: " + json.dumps(cfg, ensure_ascii=False) + "}%%"]
         if self.title:
-            L.insert(0, f"%% {self.title}")
+            L.append(f"%% {self.title}")
         if self.subtitle:
-            L.insert(1 if self.title else 0, f"%% {self.subtitle}")
+            L.append(f"%% {self.subtitle}")
+        L.append("flowchart TD")
 
         for n in self.nodes:
             l, r = MERMAID_SHAPES.get(n.type, ("[", "]"))
-            txt = (n.text or "").replace('"', "#quot;").replace("\n", " ")
-            L.append(f'    {self._mid(n.id)}{l}"{txt}"{r}')
+            # 学术风格用六边形「准备作业」时，Mermaid 也跟着换，保证两边同形
+            if n.type in ("start", "end") and self.start_shape == "hexagon":
+                l, r = ("{{", "}}")
+            L.append(f'    {self._mid(n.id)}{l}"{self._mermaid_label(n, uniform)}"{r}')
 
-        for e in self.edges:
+        for e in self._mermaid_edge_order():
             a = "-.->" if (e.back or e.style == "dashed") else "-->"
             lab = (e.label or "").strip().replace('"', "#quot;")
             if lab:
@@ -874,9 +947,6 @@ class Diagram:
             else:
                 L.append(f'    {self._mid(e.s)} {a} {self._mid(e.t)}')
 
-        c = self.c
-        dark = self.palette_name == "dark"
-        fg = "#FFFFFF" if not dark else "#F5F7FA"
         defs = [
             ("startEnd", c["start_f"], c["start_s"], c["start_t"]),
             ("process", c["process_f"], c["process_s"], c["process_t"]),
@@ -897,7 +967,7 @@ class Diagram:
             buckets.setdefault(key, []).append(self._mid(n.id))
         for key, ids in buckets.items():
             L.append(f"    class {','.join(ids)} {key};")
-        L.append(f"    linkStyle default stroke:{c['edge']},stroke-width:1.5px,color:{c['sub']};")
+        L.append(f"    linkStyle default stroke:{c['edge']},stroke-width:1.5px;")
         if self.notes:
             L.append("")
             for nt in self.notes:
